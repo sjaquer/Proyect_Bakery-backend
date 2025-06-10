@@ -1,24 +1,19 @@
 // src/routes/orderRoutes.js
-// --------------------------
-// Rutas para órdenes:
-//   POST   /api/orders             → crear nueva orden
-//   GET    /api/orders             → listar órdenes (admin o cliente)
-//   PATCH  /api/orders/:id/status  → actualizar estado de orden (admin)
-
 const express = require('express');
-const router = express.Router();
-const orderController = require('../controllers/orderController');
+const router  = express.Router();
 const { protect, isAdmin } = require('../middleware/authMiddleware');
+const orderController = require('../controllers/orderController');
 
-// Crear nueva orden (público)
-router.post('/', orderController.createOrder);
+// Cliente crea pedido
+router.post('/', protect, orderController.createOrder);
 
-// Listar órdenes:
-// - Si el usuario es admin → devuelve todas
-// - Si el usuario es customer y envía ?clientId=xxx → devuelve solo sus órdenes
-router.get('/', protect, orderController.getOrders);
+// Cliente ve sus pedidos
+router.get('/', protect, orderController.getCustomerOrders);
 
-// Actualizar estado de orden (solo admin)
+// Admin ve todas las órdenes
+router.get('/all', protect, isAdmin, orderController.getAllOrders);
+
+// Admin actualiza estado
 router.patch('/:id/status', protect, isAdmin, orderController.updateOrderStatus);
 
 module.exports = router;
