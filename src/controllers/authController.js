@@ -8,6 +8,14 @@ const User = require('../models/User');
 // @route   POST /api/auth/register
 // @desc    Registrar nuevo usuario
 // @access  Público
+exports.loginUser = async (req, res) => {
+  console.log('🔐 loginUser llamado', { body: req.body, JWT_SECRET: !!process.env.JWT_SECRET });
+  const { email, password } = req.body;
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET no está definido en process.env');
+    return res.status(500).json({ message: 'Error interno de configuración' });
+  }
+
 exports.registerUser = async (req, res) => {
   const { name, email, password, role = 'customer' } = req.body;
   try {
@@ -76,5 +84,4 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     console.error('Error en loginUser:', error);
     return res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
+  };
