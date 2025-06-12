@@ -3,7 +3,7 @@
 // Aquí va la lógica de cada endpoint de productos: 
 // - getAllProducts, getProductById, createProduct, updateProduct, deleteProduct
 
-const Product = require('../models/Product');
+const { Product } = require('../models');
 
 // @route   GET /api/products
 // @desc    Obtener todos los productos
