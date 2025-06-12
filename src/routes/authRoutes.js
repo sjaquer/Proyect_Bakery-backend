@@ -3,7 +3,7 @@
 // Rutas para autenticación:
 //   POST /api/auth/register  → registrar usuario (customer o admin)
 //   POST /api/auth/login     → login y obtener JWT
-router.get('/me', getMe);
+
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');

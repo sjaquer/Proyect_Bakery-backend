@@ -12,7 +12,7 @@ import api from '../../api/axiosConfig';
 export const ProtectedRoute = ({ children }) => {
   const [ok, setOk] = useState<boolean | null>(null);
   const loc = useLocation();
-router.get('/me', getMe);
+
   useEffect(() => {
     api.get('/api/auth/me')      // crea este endpoint que lee la cookie y devuelve { id, role }
       .then(() => setOk(true))
