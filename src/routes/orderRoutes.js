@@ -2,8 +2,8 @@
 // src/routes/orderRoutes.js
 // =============================
 
-const express = require('express');
-const router  = express.Router();
+const express       = require('express');
+const router        = express.Router();
 const {
   createOrder,
   getCustomerOrders,
@@ -13,9 +13,9 @@ const {
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 
 // Rutas de pedidos
-outer.post('/',  protect,             createOrder);
-router.get('/',    protect,             getCustomerOrders);
-router.get('/all', protect, isAdmin,     getAllOrders);
-router.put('/:id/status', protect, isAdmin, updateOrderStatus);
+router.post('/',           protect,           createOrder);
+router.get('/',            protect,           getCustomerOrders);
+router.get('/all',         protect,    isAdmin, getAllOrders);
+router.put('/:id/status',  protect,    isAdmin, updateOrderStatus);
 
 module.exports = router;

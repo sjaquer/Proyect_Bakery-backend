@@ -50,8 +50,8 @@ exports.createOrder = async (req, res) => {
       // 3) Retornar la orden completa con sus items
       return await Order.findByPk(order.id, {
         include: [
-          { model: OrderItem },
-          { model: Customer }
+          { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] },
+          { model: Customer,  attributes: ['id', 'name', 'email'] }
         ],
         transaction: tx
       });
@@ -66,11 +66,14 @@ exports.createOrder = async (req, res) => {
 
 // Listar órdenes de un cliente
 exports.getCustomerOrders = async (req, res) => {
-  const { clientId } = req.query;
   try {
+    // Utilizamos req.user.id en lugar de query para más seguridad
+    const customerId = req.user.id;
     const orders = await Order.findAll({
-      where: { customerId: clientId },
-      include: [OrderItem],
+      where: { customerId },
+      include: [
+        { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] }
+      ],
       order: [['createdAt', 'DESC']]
     });
     return res.json(orders);
