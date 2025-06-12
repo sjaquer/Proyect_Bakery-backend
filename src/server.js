@@ -24,9 +24,6 @@ const app = express();
 // CORS dinámico
 // ----------------------
 const corsOrigins = [/\.vercel\.app$/, /\.onrender\.com$/];
-// Configuración de CORS
-// Permitir solicitudes desde dominios específicos 
-
 app.use(cors({
   origin(origin, cb) {
     if (!origin) return cb(null, true);
