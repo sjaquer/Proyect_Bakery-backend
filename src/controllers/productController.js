@@ -8,30 +8,39 @@ const Product = require('../models/Product');
 // @route   GET /api/products
 // @desc    Obtener todos los productos
 // @access  Público
-exports.getAllProducts = async (req, res) => {
+exports.getAllProducts = async (req, res, next) => {
   try {
-    const products = await Product.findAll();
+    const products = await Product.findAll({
+      attributes: [
+        'id',
+        'name',
+        'description',
+        'price',
+        'stock',        // <-- asegúrate de incluir stock
+        'createdAt',
+        'updatedAt'
+      ]
+    });
     return res.json(products);
-  } catch (error) {
-    console.error('Error en getAllProducts:', error);
-    return res.status(500).json({ message: 'Error al obtener productos' });
+  } catch (err) {
+    next(err);
   }
 };
 
 // @route   GET /api/products/:id
 // @desc    Obtener un producto por su ID
 // @access  Público
-exports.getProductById = async (req, res) => {
-  const { id } = req.params;
+exports.getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findByPk(id);
+    const product = await Product.findByPk(req.params.id, {
+      attributes: ['id', 'name', 'description', 'price', 'stock']
+    });
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
     return res.json(product);
-  } catch (error) {
-    console.error('Error en getProductById:', error);
-    return res.status(500).json({ message: 'Error al obtener el producto' });
+  } catch (err) {
+    next(err);
   }
 };
 
