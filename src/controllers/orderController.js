@@ -1,10 +1,13 @@
+// =============================
 // src/controllers/orderController.js
+// =============================
+
 const { Sequelize } = require('sequelize');
-const sequelize = require('../config/database');
-const Order     = require('../models/Order');
-const OrderItem = require('../models/OrderItem');
-const Product   = require('../models/Product');
-const Customer  = require('../models/Customer'); // o User si usas User
+const sequelize       = require('../config/database');
+const Order           = require('../models/Order');
+const OrderItem       = require('../models/OrderItem');
+const Product         = require('../models/Product');
+const Customer        = require('../models/Customer'); // o User si usas User
 
 // Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
@@ -35,10 +38,10 @@ exports.createOrder = async (req, res) => {
         // Crear línea de pedido
         await OrderItem.create(
           {
-            orderId: order.id,
+            orderId:   order.id,
             productId: it.productId,
-            quantity: it.quantity,
-            price: product.price
+            quantity:  it.quantity,
+            price:     product.price
           },
           { transaction: tx }
         );
@@ -46,7 +49,10 @@ exports.createOrder = async (req, res) => {
 
       // 3) Retornar la orden completa con sus items
       return await Order.findByPk(order.id, {
-        include: [{ model: OrderItem }, { model: Customer }],
+        include: [
+          { model: OrderItem },
+          { model: Customer }
+        ],
         transaction: tx
       });
     });
@@ -64,7 +70,8 @@ exports.getCustomerOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({
       where: { customerId: clientId },
-      include: [OrderItem]
+      include: [OrderItem],
+      order: [['createdAt', 'DESC']]
     });
     return res.json(orders);
   } catch (err) {
@@ -74,9 +81,15 @@ exports.getCustomerOrders = async (req, res) => {
 };
 
 // Listar todas las órdenes (admin)
-exports.getAllOrders = async (_, res) => {
+exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.findAll({ include: [OrderItem, Customer] });
+    const orders = await Order.findAll({
+      include: [
+        { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] },
+        { model: Customer,  attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
     return res.json(orders);
   } catch (err) {
     console.error('Error en getAllOrders:', err);
@@ -84,7 +97,7 @@ exports.getAllOrders = async (_, res) => {
   }
 };
 
-// Actualizar estado
+// Actualizar estado de la orden
 exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
