@@ -5,17 +5,11 @@ const express      = require('express');
 const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 
-// Modelos
-const Product = require('./models/Product');
-require('./models/Customer');
-require('./models/Order');
-require('./models/OrderItem');
-require('./models/User');
-
-// Rutas
+// Importa tus routers
 const authRoutes    = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes   = require('./routes/orderRoutes');
+// … cualquier otro router …
 
 // Crea la app
 const app = express();
@@ -34,46 +28,12 @@ app.use(
   })
 );
 
-// CORS dinámico
-const corsOrigins = [/\.vercel\.app$/, /\.onrender\.com$/];
-app.use(cors({
-  origin(origin, cb) {
-    if (!origin) return cb(null, true);
-    if (corsOrigins.some(rx => rx.test(origin))) return cb(null, true);
-    return cb(new Error('CORS no permitido'), false);
-  },
-  credentials: true
-}));
-
-app.use(bodyParser.json());
-
-// Ruta raíz
-app.get('/', (req, res) => res.send('🎉 API Digital Bakery corriendo'));
-
-// Montar rutas
+// Rutas de la API
 app.use('/api/auth',     authRoutes);
 app.use('/api/products',  productRoutes);
 app.use('/api/orders',    orderRoutes);
+// … monta aquí el resto de tus rutas …
 
-// Semilla de productos si la tabla está vacía
-async function seedProductsIfEmpty() {
-  const count = await Product.count();
-  if (count === 0) {
-    const sample = [
-      { name: 'Concha Tradicional', description: 'Concha dulce de vainilla con cubierta crujiente.', price: 1.5, stock: 100, category: 'sweet', imageUrl: '' },
-      { name: 'Pan de Muerto',      description: 'Pan de muerto tradicional, suave y esponjoso.', price: 2.0, stock: 50,  category: 'special', imageUrl: '' },
-      { name: 'Donut Chocolate',    description: 'Donut cubierto de chocolate con chispas.', price: 1.25, stock: 120, category: 'sweet', imageUrl: '' },
-      { name: 'Bolillo Blanco',     description: 'Bolillo fresco, ideal para acompañar cualquier platillo.', price: 0.5, stock: 197,  category: 'bread', imageUrl: '' },
-      { name: 'Pan Integral',       description: 'Pan de trigo integral, saludable y nutritivo.', price: 1.75, stock: 80,  category: 'bread', imageUrl: '' },
-    ];
-    for (const p of sample) {
-      await Product.create(p);
-    }
-    console.log(`✅ Seed: ${sample.length} productos creados`);
-  } else {
-    console.log(`ℹ️ No seed necesario. Productos existentes: ${count}`);
-  }
-}
 // Conexión a la base de datos
 const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
