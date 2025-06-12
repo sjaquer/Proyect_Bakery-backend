@@ -1,41 +1,28 @@
 // src/routes/productRoutes.js
-// ----------------------------
-// Rutas para productos:
-//   GET    /api/products        → listar todos los productos
-//   GET    /api/products/:id    → ver un producto por su ID
-//   POST   /api/products        → crear un producto (admin)
-//   PUT    /api/products/:id    → actualizar un producto (admin)
-//   DELETE /api/products/:id    → eliminar un producto (admin)
-import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import api from '../../api/axiosConfig';
-export const ProtectedRoute = ({ children }) => {
-  const [ok, setOk] = useState<boolean | null>(null);
-  const loc = useLocation();
-
-  useEffect(() => {
-    api.get('/api/auth/me')      // crea este endpoint que lee la cookie y devuelve { id, role }
-      .then(() => setOk(true))
-      .catch(() => setOk(false));
-  }, []);
-
-  if (ok === null) return <p>Cargando sesión…</p>;
-  if (!ok) return <Navigate to="/login" state={{ from: loc }} replace />;
-  return <>{children}</>;
-};
-
 const express = require('express');
 const router = express.Router();
-const productController = require('../controllers/productController');
-const { protect, isAdmin } = require('../middleware/authMiddleware');
+const {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} = require('../controllers/productController');
+const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 
-// ✅ Rutas públicas
-router.get('/', productController.getAllProducts);     // 🔥 Solo esta definición
-router.get('/:id', productController.getProductById);
+// GET /api/products            → lista de productos
+router.get('/', authenticate, getAllProducts);
 
-// ✅ Rutas protegidas (solo admin)
-router.post('/', protect, isAdmin, productController.createProduct);
-router.put('/:id', protect, isAdmin, productController.updateProduct);
-router.delete('/:id', protect, isAdmin, productController.deleteProduct);
+// GET /api/products/:id        → detalle de un producto
+router.get('/:id', authenticate, getProductById);
+
+// POST /api/products           → crear producto (sólo admin)
+router.post('/', authenticate, authorizeAdmin, createProduct);
+
+// PUT /api/products/:id        → editar producto (sólo admin)
+router.put('/:id', authenticate, authorizeAdmin, updateProduct);
+
+// DELETE /api/products/:id     → borrar producto (sólo admin)
+router.delete('/:id', authenticate, authorizeAdmin, deleteProduct);
 
 module.exports = router;
