@@ -1,28 +1,29 @@
 // src/routes/productRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} = require('../controllers/productController');
-const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 
-// GET /api/products            → lista de productos
-router.get('/', authenticate, getAllProducts);
+// Controladores de producto
+const productController = require('../controllers/productController');
 
-// GET /api/products/:id        → detalle de un producto
-router.get('/:id', authenticate, getProductById);
+// Middleware de autenticación/autorización
+const { protect, isAdmin } = require('../middleware/authMiddleware');
 
-// POST /api/products           → crear producto (sólo admin)
-router.post('/', authenticate, authorizeAdmin, createProduct);
+// → Rutas públicas
+// GET /api/products          → Lista todos los productos
+router.get('/', productController.getAllProducts);
 
-// PUT /api/products/:id        → editar producto (sólo admin)
-router.put('/:id', authenticate, authorizeAdmin, updateProduct);
+// GET /api/products/:id      → Detalle de un producto
+router.get('/:id', productController.getProductById);
 
-// DELETE /api/products/:id     → borrar producto (sólo admin)
-router.delete('/:id', authenticate, authorizeAdmin, deleteProduct);
+// → Rutas protegidas (solo admin)
+// POST /api/products         → Crear producto
+router.post('/', protect, isAdmin, productController.createProduct);
+
+// PUT /api/products/:id      → Actualizar producto
+router.put('/:id', protect, isAdmin, productController.updateProduct);
+
+// DELETE /api/products/:id   → Eliminar producto
+router.delete('/:id', protect, isAdmin, productController.deleteProduct);
 
 module.exports = router;
