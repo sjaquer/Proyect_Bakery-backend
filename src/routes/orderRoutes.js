@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 const orderController = require('../controllers/orderController');
-
+router.get('/me', getMe);
 // Cliente crea pedido
 router.post('/', protect, orderController.createOrder);
 
