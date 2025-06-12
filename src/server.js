@@ -3,8 +3,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const sequelize = require('./config/database');
+const cookieParser = require('cookie-parser');
+const { Sequelize } = require('sequelize');
 
 // Modelos
 const Product = require('./models/Product');
@@ -14,17 +14,23 @@ require('./models/OrderItem');
 require('./models/User');
 
 // Rutas
-const authRoutes = require('./routes/authRoutes');
+const authRoutes    = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-app.use('/api/orders', orderRoutes);
+const orderRoutes   = require('./routes/orderRoutes');
 
 
 const app = express();
+// Middlewares globales
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: ['https://digitalbakery.vercel.app', 'https://digital-bakery-backend.onrender.com'],
+    credentials: true
+  })
+);
 
-// ----------------------
 // CORS dinámico
-// ----------------------
 const corsOrigins = [/\.vercel\.app$/, /\.onrender\.com$/];
 app.use(cors({
   origin(origin, cb) {
@@ -41,9 +47,9 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => res.send('🎉 API Digital Bakery corriendo'));
 
 // Montar rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/products',  productRoutes);
+app.use('/api/orders',    orderRoutes);
 
 // Semilla de productos si la tabla está vacía
 async function seedProductsIfEmpty() {
@@ -64,16 +70,17 @@ async function seedProductsIfEmpty() {
     console.log(`ℹ️ No seed necesario. Productos existentes: ${count}`);
   }
 }
+// Conexión a la base de datos
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
+});
+sequelize
+  .authenticate()
+  .then(() => console.log('🔌 Conectando a PostgreSQL via DATABASE_URL'))
+  .catch((err) => console.error('❌ Error al conectar BD:', err));
 
-// Arrancar servidor tras sync y seed
+// Inicia el servidor
 const PORT = process.env.PORT || 4000;
-sequelize.sync()
-  .then(async () => {
-    await seedProductsIfEmpty();
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ Error al sincronizar DB:', err);
-  });
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
+});
