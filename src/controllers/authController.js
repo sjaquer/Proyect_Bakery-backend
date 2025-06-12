@@ -12,48 +12,44 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // 1) Verificar que no exista ya ese email
-    const existing = await User.findOne({ where: { email } });
-    if (existing) {
+    // 1) Verificar duplicado
+    const exists = await User.findOne({ where: { email } });
+    if (exists) {
       return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
-    // 2) Hashear contraseña
+    // 2) Hashear password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashed = await bcrypt.hash(password, salt);
 
     // 3) Crear usuario
     const newUser = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password: hashed,
       role: role || 'customer',
     });
 
-    // 4) Firmar JWT
+    // 4) Generar token
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // 5) Enviar cookie segura
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
-    });
-
-    // 6) Devolver datos del usuario (sin password)
+    // 5) Devolver shape { user, token } que tu frontend espera
     return res.status(201).json({
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
+      user: {
+        id: newUser.id.toString(),
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: newUser.createdAt.toISOString(),
+      },
+      token,
     });
-  } catch (error) {
-    console.error('Error en registerUser:', error);
+  } catch (err) {
+    console.error('Error registerUser:', err);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -63,9 +59,8 @@ exports.registerUser = async (req, res) => {
 // @access  Público
 exports.loginUser = async (req, res) => {
   try {
-    // 0) Asegurarnos de tener la clave
     if (!process.env.JWT_SECRET) {
-      console.error('❌ JWT_SECRET no está definido en process.env');
+      console.error('JWT_SECRET no definido');
       return res.status(500).json({ message: 'Error de configuración' });
     }
 
@@ -78,35 +73,31 @@ exports.loginUser = async (req, res) => {
     }
 
     // 2) Verificar contraseña
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // 3) Firmar JWT
+    // 3) Generar token
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // 4) Enviar cookie segura
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    // 5) Devolver datos del usuario
+    // 4) Responder con { user, token }
     return res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      user: {
+        id: user.id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+      },
+      token,
     });
-  } catch (error) {
-    console.error('Error en loginUser:', error);
+  } catch (err) {
+    console.error('Error loginUser:', err);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
