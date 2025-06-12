@@ -3,7 +3,7 @@
 // Aquí va la lógica de cada endpoint de productos: 
 // - getAllProducts, getProductById, createProduct, updateProduct, deleteProduct
 
-const { Product } = require('../models');
+const Product = require('../models/Product');
 
 // @route   GET /api/products
 // @desc    Obtener todos los productos
@@ -16,12 +16,12 @@ exports.getAllProducts = async (req, res, next) => {
         'name',
         'description',
         'price',
-        'stock',        // <-- asegúrate de incluir stock
+        'stock',       // Asegúrate de que este campo exista en tu modelo
         'createdAt',
         'updatedAt'
       ]
     });
-    return res.json(products);
+    res.json(products);
   } catch (err) {
     next(err);
   }
@@ -38,7 +38,7 @@ exports.getProductById = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
-    return res.json(product);
+    res.json(product);
   } catch (err) {
     next(err);
   }
@@ -47,63 +47,47 @@ exports.getProductById = async (req, res, next) => {
 // @route   POST /api/products
 // @desc    Crear un nuevo producto
 // @access  Privado (admin)
-exports.createProduct = async (req, res) => {
-  const { name, description, price, stock, category, imageUrl } = req.body;
+exports.createProduct = async (req, res, next) => {
   try {
-    const newProduct = await Product.create({
-      name,
-      description,
-      price,
-      stock,
-      category,
-      imageUrl,
-    });
-    return res.status(201).json(newProduct);
-  } catch (error) {
-    console.error('Error en createProduct:', error);
-    return res.status(500).json({ message: 'Error al crear el producto' });
+    const { name, description, price, stock } = req.body;
+    const newProduct = await Product.create({ name, description, price, stock });
+    res.status(201).json(newProduct);
+  } catch (err) {
+    next(err);
   }
 };
 
 // @route   PUT /api/products/:id
 // @desc    Actualizar producto por ID
 // @access  Privado (admin)
-exports.updateProduct = async (req, res) => {
-  const { id } = req.params;
-  const { name, description, price, stock, category, imageUrl } = req.body;
+exports.updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByPk(id);
-    if (!product) {
+    const { name, description, price, stock } = req.body;
+    const [updated] = await Product.update(
+      { name, description, price, stock },
+      { where: { id: req.params.id } }
+    );
+    if (!updated) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
-    product.name = name !== undefined ? name : product.name;
-    product.description = description !== undefined ? description : product.description;
-    product.price = price !== undefined ? price : product.price;
-    product.stock = stock !== undefined ? stock : product.stock;
-    product.category = category !== undefined ? category : product.category;
-    product.imageUrl = imageUrl !== undefined ? imageUrl : product.imageUrl;
-    await product.save();
-    return res.json(product);
-  } catch (error) {
-    console.error('Error en updateProduct:', error);
-    return res.status(500).json({ message: 'Error al actualizar el producto' });
+    const updatedProduct = await Product.findByPk(req.params.id);
+    res.json(updatedProduct);
+  } catch (err) {
+    next(err);
   }
 };
 
 // @route   DELETE /api/products/:id
 // @desc    Eliminar producto por ID
 // @access  Privado (admin)
-exports.deleteProduct = async (req, res) => {
-  const { id } = req.params;
+exports.deleteProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByPk(id);
-    if (!product) {
+    const deleted = await Product.destroy({ where: { id: req.params.id } });
+    if (!deleted) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
-    await product.destroy();
-    return res.json({ message: 'Producto eliminado correctamente' });
-  } catch (error) {
-    console.error('Error en deleteProduct:', error);
-    return res.status(500).json({ message: 'Error al eliminar el producto' });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
   }
 };
