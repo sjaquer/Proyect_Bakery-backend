@@ -17,6 +17,8 @@ require('./models/User');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+app.use('/api/orders', orderRoutes);
+
 
 const app = express();
 

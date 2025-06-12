@@ -1,19 +1,19 @@
 // src/routes/orderRoutes.js
+
 const express = require('express');
-const router  = express.Router();
-const { protect, isAdmin } = require('../middleware/authMiddleware');
+const router = express.Router();
 const orderController = require('../controllers/orderController');
+const { protect, isAdmin } = require('../middleware/authMiddleware');
 
-// Cliente crea pedido
-router.post('/', protect, orderController.createOrder);
+// GET /api/orders           → Pedidos del usuario logueado
+router.get('/', protect, orderController.getUserOrders);
 
-// Cliente ve sus pedidos
-router.get('/', protect, orderController.getCustomerOrders);
-
-// Admin ve todas las órdenes
+// GET /api/orders/all       → TODOS los pedidos (solo admin)
 router.get('/all', protect, isAdmin, orderController.getAllOrders);
 
-// Admin actualiza estado
-router.patch('/:id/status', protect, isAdmin, orderController.updateOrderStatus);
+// POST /api/orders          → Crear nuevo pedido
+router.post('/', protect, orderController.createOrder);
+
+// …otras rutas si tienes…
 
 module.exports = router;
