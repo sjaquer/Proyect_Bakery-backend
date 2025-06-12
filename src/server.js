@@ -1,10 +1,9 @@
 // src/server.js
 
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+const express      = require('express');
+const cors         = require('cors');
 const cookieParser = require('cookie-parser');
-const { Sequelize } = require('sequelize');
 
 // Modelos
 const Product = require('./models/Product');
@@ -18,14 +17,19 @@ const authRoutes    = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes   = require('./routes/orderRoutes');
 
-
+// Crea la app
 const app = express();
+
 // Middlewares globales
-app.use(express.json());
-app.use(cookieParser());
+app.use(express.json());                              // parsea JSON
+app.use(express.urlencoded({ extended: true }));      // parsea URL-encoded, si lo necesitas
+app.use(cookieParser());                              // parsea cookies
 app.use(
   cors({
-    origin: ['https://digitalbakery.vercel.app', 'https://digital-bakery-backend.onrender.com'],
+    origin: [
+      'https://digitalbakery.vercel.app',
+      'https://digital-bakery-backend.onrender.com'
+    ],
     credentials: true
   })
 );
@@ -71,6 +75,7 @@ async function seedProductsIfEmpty() {
   }
 }
 // Conexión a la base de datos
+const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
