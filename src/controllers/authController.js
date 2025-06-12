@@ -16,6 +16,23 @@ exports.loginUser = async (req, res) => {
     return res.status(500).json({ message: 'Error interno de configuración' });
   }
 
+export const getMe = (req, res) => {
+  try {
+    const payload = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    res.json({ id: payload.id, role: payload.role });
+  } catch {
+    res.status(401).json({ message: 'No autenticado' });
+  }
+};
+
+res.cookie('token', token, {
+  httpOnly: true,
+  secure: true,             // HTTPS obligatorio
+  sameSite: 'none',         // <- aquí
+  maxAge: 24 * 60 * 60 * 1000,
+  domain: 'digital-bakery-backend.onrender.com'  // opcional, para asegurar el scope
+});
+
 exports.registerUser = async (req, res) => {
   const { name, email, password, role = 'customer' } = req.body;
   try {

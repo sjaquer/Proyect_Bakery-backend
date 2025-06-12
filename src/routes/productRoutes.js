@@ -6,6 +6,23 @@
 //   POST   /api/products        → crear un producto (admin)
 //   PUT    /api/products/:id    → actualizar un producto (admin)
 //   DELETE /api/products/:id    → eliminar un producto (admin)
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import api from '../../api/axiosConfig';
+export const ProtectedRoute = ({ children }) => {
+  const [ok, setOk] = useState<boolean | null>(null);
+  const loc = useLocation();
+
+  useEffect(() => {
+    api.get('/api/auth/me')      // crea este endpoint que lee la cookie y devuelve { id, role }
+      .then(() => setOk(true))
+      .catch(() => setOk(false));
+  }, []);
+
+  if (ok === null) return <p>Cargando sesión…</p>;
+  if (!ok) return <Navigate to="/login" state={{ from: loc }} replace />;
+  return <>{children}</>;
+};
 
 const express = require('express');
 const router = express.Router();
