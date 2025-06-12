@@ -8,41 +8,49 @@ const User = require('../models/User');
 // @route   POST /api/auth/register
 // @desc    Registrar nuevo usuario
 // @access  Público
-exports.loginUser = async (req, res) => {
-  console.log('🔐 loginUser llamado', { body: req.body, JWT_SECRET: !!process.env.JWT_SECRET });
-  const { email, password } = req.body;
-  if (!process.env.JWT_SECRET) {
-    console.error('❌ JWT_SECRET no está definido en process.env');
-    return res.status(500).json({ message: 'Error interno de configuración' });
-  }
-
 exports.registerUser = async (req, res) => {
-  const { name, email, password, role = 'customer' } = req.body;
   try {
-    // Encriptar contraseña con bcryptjs
-    const hashed = await bcrypt.hash(password, 10);
+    const { name, email, password, role } = req.body;
 
-    // Crear usuario
+    // 1) Verificar que no exista ya ese email
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: 'El correo ya está registrado' });
+    }
+
+    // 2) Hashear contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 3) Crear usuario
     const newUser = await User.create({
       name,
       email,
-      password: hashed,
-      role,
+      password: hashedPassword,
+      role: role || 'customer',
     });
 
-    // Generar token JWT
+    // 4) Firmar JWT
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
+    // 5) Enviar cookie segura
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
+    });
+
+    // 6) Devolver datos del usuario (sin password)
     return res.status(201).json({
       id: newUser.id,
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
-      token,
     });
   } catch (error) {
     console.error('Error en registerUser:', error);
@@ -54,34 +62,51 @@ exports.registerUser = async (req, res) => {
 // @desc    Autenticar usuario
 // @access  Público
 exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
   try {
+    // 0) Asegurarnos de tener la clave
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET no está definido en process.env');
+      return res.status(500).json({ message: 'Error de configuración' });
+    }
+
+    const { email, password } = req.body;
+
+    // 1) Buscar usuario
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // Comparar con bcryptjs
+    // 2) Verificar contraseña
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // Generar token JWT
+    // 3) Firmar JWT
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
+    // 4) Enviar cookie segura
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    // 5) Devolver datos del usuario
     return res.json({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      token,
     });
   } catch (error) {
     console.error('Error en loginUser:', error);
     return res.status(500).json({ message: 'Error interno del servidor' });
-  };
+  }
+};
