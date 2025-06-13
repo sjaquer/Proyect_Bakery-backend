@@ -67,14 +67,21 @@ exports.createOrder = async (req, res) => {
 // Listar órdenes de un cliente
 exports.getCustomerOrders = async (req, res) => {
   try {
-    // Utilizamos req.user.id en lugar de query para más seguridad
     const customerId = req.user.id;
     const orders = await Order.findAll({
       where: { customerId },
       include: [
-        { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] }
+        {
+          model: OrderItem,
+          as: 'OrderItems',              // ← coincide con Order.hasMany(..., { as: 'OrderItems' })
+          include: [{
+            model: Product,
+            as: 'Product',                // ← coincide con OrderItem.belongsTo(Product, { as: 'Product' })
+            attributes: ['id','name','price']
+          }]
+        }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt','DESC']]
     });
     return res.json(orders);
   } catch (err) {
@@ -88,10 +95,21 @@ exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({
       include: [
-        { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] },
-        { model: Customer,  attributes: ['id', 'name', 'email'] }
+        {
+          model: OrderItem,
+          as: 'OrderItems',              // ← mismo alias
+          include: [{ 
+            model: Product, 
+            as: 'Product', 
+            attributes: ['id','name','price'] 
+          }]
+        },
+        { 
+          model: Customer,  
+          attributes: ['id','name','email'] 
+        }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt','DESC']]
     });
     return res.json(orders);
   } catch (err) {

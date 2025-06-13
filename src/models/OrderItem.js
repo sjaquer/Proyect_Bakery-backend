@@ -49,13 +49,10 @@ Order.hasMany(OrderItem, {
 });
 
 // 2) Un OrderItem pertenece a un Product
-OrderItem.belongsTo(Product, {
-  foreignKey: {
-    name: 'productId',
-    allowNull: false,
-  },
-  as: 'product',
+OrderItem.belongsTo(Product, { 
+  foreignKey: 'productId', as: 'Product' 
 });
+
 Product.hasMany(OrderItem, {
   foreignKey: 'productId',
   as: 'orderItems',
