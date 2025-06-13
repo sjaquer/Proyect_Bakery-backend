@@ -1,60 +1,55 @@
 // src/models/OrderItem.js
-// ----------------------
-// Modelo "OrderItem" (ítem de una orden).
-// Campos:
-//  - id (PK), quantity, priceUnit, subtotal
-//  - orderId (FK), productId (FK), createdAt, updatedAt
-
-const { DataTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Product = require('./Product');
+const Product  = require('./Product');
 
-const OrderItem = sequelize.define('OrderItem', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+class OrderItem extends Model {}
+
+
+OrderItem.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    quantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    priceUnit: {
+      // Se llama priceUnit en tu BD
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false
+    },
+    subtotal: {
+      // También lo defines en la tabla
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false
+    },
+    orderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'orderId'
+    },
+    productId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'productId'
+    }
   },
-  quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  priceUnit: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-  },
-  subtotal: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-    // se calcula como priceUnit * quantity
-  },
-}, {
-  tableName: 'order_items',
-  timestamps: true,
-});
+  {
+    sequelize,
+    modelName: 'OrderItem',
+    tableName: 'order_items',
+    timestamps: true,
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  }
+);
 
 // Relaciones:
-// 1) Un OrderItem pertenece a un Order
-OrderItem.belongsTo(Order, {
-  foreignKey: {
-    name: 'orderId',
-    allowNull: false,
-  },
-  as: 'order',
-});
-Order.hasMany(OrderItem, {
-  foreignKey: 'orderId',
-  as: 'orderItems',
-});
-
-// 2) Un OrderItem pertenece a un Product
-OrderItem.belongsTo(Product, { 
-  foreignKey: 'productId', as: 'Product' 
-});
-
-Product.hasMany(OrderItem, {
-  foreignKey: 'productId',
-  as: 'orderItems',
-});
+OrderItem.belongsTo(Product, { foreignKey: 'productId', as: 'Product' });
+Product.hasMany(OrderItem,   { foreignKey: 'productId', as: 'orderItems' });
 
 module.exports = OrderItem;
