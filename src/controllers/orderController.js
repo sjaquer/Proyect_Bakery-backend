@@ -11,16 +11,27 @@ const Customer        = require('../models/Customer'); // o User si usas User
 
 // Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
-  const { customerId, items } = req.body;
-  if (!customerId || !Array.isArray(items) || items.length === 0) {
+  const { items, customerInfo, paymentMethod } = req.body;
+  if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'Datos de orden incompletos' });
   }
-
   try {
     const result = await sequelize.transaction(async (tx) => {
-      // 1) Crear la orden
-      const order = await Order.create(
-        { customerId, status: 'pending' },
+      let customerId = req.user?.id;
+      if (!customerId) {
+
+// Invitado: crear o buscar Customer por teléfono
+        const { name, phone, email, address } = customerInfo;
+        const [customer] = await Customer.findOrCreate({
+          where: { phone },
+          defaults: { name, email, address }
+        });
+        customerId = customer.id;
+      }
+
+      // 1) Crear la orden con paymentMethod si aplica
+        const order = await Order.create(
+        { customerId, status: 'pending', paymentMethod },
         { transaction: tx }
       );
 

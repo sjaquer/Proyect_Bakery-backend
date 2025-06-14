@@ -13,7 +13,8 @@ const {
 const { protect, isAdmin } = require('../middleware/authMiddleware');
 
 // Rutas de pedidos
-router.post('/',           protect,           createOrder);
+// Se permite POST sin JWT para invitado (createOrder internamente gestiona guest)
+router.post('/',           createOrder);
 router.get('/',            protect,           getCustomerOrders);
 router.get('/all',         protect,    isAdmin, getAllOrders);
 router.put('/:id/status',  protect,    isAdmin, updateOrderStatus);
