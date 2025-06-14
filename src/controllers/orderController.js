@@ -19,8 +19,7 @@ exports.createOrder = async (req, res) => {
     const result = await sequelize.transaction(async (tx) => {
       let customerId = req.user?.id;
       if (!customerId) {
-
-// Invitado: crear o buscar Customer por teléfono
+        // Invitado: crear o buscar Customer por teléfono
         const { name, phone, email, address } = customerInfo;
         const [customer] = await Customer.findOrCreate({
           where: { phone },
@@ -29,11 +28,13 @@ exports.createOrder = async (req, res) => {
         customerId = customer.id;
       }
 
-      // 1) Crear la orden con paymentMethod si aplica
-        const order = await Order.create(
-        { customerId, status: 'pending', paymentMethod },
+      // 1) Crear la orden inicial
+      const order = await Order.create(
+        { customerId, status: 'pending', paymentMethod, total: 0 },
         { transaction: tx }
       );
+
+      let orderTotal = 0;
 
       // 2) Para cada ítem, verificar stock y crear OrderItem
       for (const it of items) {
@@ -42,6 +43,10 @@ exports.createOrder = async (req, res) => {
         if (product.stock < it.quantity) {
           throw new Error(`Stock insuficiente para ${product.name}`);
         }
+
+        const subtotal = parseFloat(product.price) * it.quantity;
+        orderTotal += subtotal;
+
         // Descontar stock
         product.stock -= it.quantity;
         await product.save({ transaction: tx });
@@ -52,17 +57,25 @@ exports.createOrder = async (req, res) => {
             orderId:   order.id,
             productId: it.productId,
             quantity:  it.quantity,
-            price:     product.price
+            priceUnit: product.price,
+            subtotal
           },
           { transaction: tx }
         );
       }
 
-      // 3) Retornar la orden completa con sus items
+      // 3) Actualizar total y retornar la orden completa con sus items
+      order.total = orderTotal;
+      await order.save({ transaction: tx });
+
       return await Order.findByPk(order.id, {
         include: [
-          { model: OrderItem, include: [{ model: Product, attributes: ['id', 'name', 'price'] }] },
-          { model: Customer,  attributes: ['id', 'name', 'email'] }
+          {
+            model: OrderItem,
+            as: 'OrderItems',
+            include: [{ model: Product, as: 'Product', attributes: ['id', 'name', 'price'] }]
+          },
+          { model: Customer, as: 'Customer', attributes: ['id', 'name', 'email'] }
         ],
         transaction: tx
       });
@@ -115,9 +128,10 @@ exports.getAllOrders = async (req, res) => {
             attributes: ['id','name','price'] 
           }]
         },
-        { 
-          model: Customer,  
-          attributes: ['id','name','email'] 
+        {
+          model: Customer,
+          as: 'Customer',
+          attributes: ['id','name','email']
         }
       ],
       order: [['createdAt','DESC']]
