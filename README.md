@@ -32,6 +32,21 @@ Para iniciar el servidor en modo desarrollo, ejecuta:
 npm run dev
 ```
 
+### Ejemplo de creación de producto
+
+Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo
+`imageUrl` junto con el resto de datos del producto. Ejemplo de payload:
+
+```json
+{
+  "name": "Pan artesanal",
+  "description": "Pan elaborado a mano",
+  "price": 3.5,
+  "stock": 10,
+  "imageUrl": "https://ejemplo.com/pan.png"
+}
+```
+
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para discutir cambios.

@@ -49,8 +49,14 @@ exports.getProductById = async (req, res, next) => {
 // @access  Privado (admin)
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, stock } = req.body;
-    const newProduct = await Product.create({ name, description, price, stock });
+    const { name, description, price, stock, imageUrl } = req.body;
+    const newProduct = await Product.create({
+      name,
+      description,
+      price,
+      stock,
+      imageUrl,
+    });
     res.status(201).json(newProduct);
   } catch (err) {
     next(err);
@@ -62,9 +68,9 @@ exports.createProduct = async (req, res, next) => {
 // @access  Privado (admin)
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, description, price, stock } = req.body;
+    const { name, description, price, stock, imageUrl } = req.body;
     const [updated] = await Product.update(
-      { name, description, price, stock },
+      { name, description, price, stock, imageUrl },
       { where: { id: req.params.id } }
     );
     if (!updated) {
