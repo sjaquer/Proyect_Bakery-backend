@@ -9,28 +9,6 @@ const OrderItem       = require('../models/OrderItem');
 const Product         = require('../models/Product');
 const Customer        = require('../models/Customer'); // o User si usas User
 
-// Convierte ids numéricos a strings para evitar errores en el frontend
-const formatOrder = (ord) => {
-  if (!ord) return ord;
-  const plain = ord.get ? ord.get({ plain: true }) : ord;
-  plain.id = plain.id.toString();
-  if (plain.customerId !== undefined) plain.customerId = String(plain.customerId);
-  if (plain.Customer) {
-    plain.Customer.id = String(plain.Customer.id);
-  }
-  if (Array.isArray(plain.OrderItems)) {
-    plain.OrderItems = plain.OrderItems.map((it) => {
-      const item = it.get ? it.get({ plain: true }) : it;
-      item.id = String(item.id);
-      if (item.orderId !== undefined) item.orderId = String(item.orderId);
-      if (item.productId !== undefined) item.productId = String(item.productId);
-      if (item.Product) item.Product.id = String(item.Product.id);
-      return item;
-    });
-  }
-  return plain;
-};
-
 // Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
   const { items, customerInfo, paymentMethod } = req.body;
@@ -103,16 +81,7 @@ exports.createOrder = async (req, res) => {
       });
     });
 
-    const formatted = formatOrder(result);
-    const resumen = formatted.OrderItems
-      .map((it) => `${it.quantity}x ${it.Product.name}`)
-      .join(', ');
-    return res.status(201).json({
-      ...formatted,
-      message:
-        'Pedido registrado. Espera confirmaci\u00f3n de la tienda para su preparaci\u00f3n.',
-      resumen,
-    });
+    return res.status(201).json(result);
   } catch (err) {
     console.error('Error en createOrder:', err);
     return res.status(500).json({ message: err.message || 'Error al crear orden' });
@@ -138,7 +107,7 @@ exports.getCustomerOrders = async (req, res) => {
       ],
       order: [['createdAt','DESC']]
     });
-    return res.json(orders.map(formatOrder));
+    return res.json(orders);
   } catch (err) {
     console.error('Error en getCustomerOrders:', err);
     return res.status(500).json({ message: 'Error al obtener órdenes' });
@@ -167,7 +136,7 @@ exports.getAllOrders = async (req, res) => {
       ],
       order: [['createdAt','DESC']]
     });
-    return res.json(orders.map(formatOrder));
+    return res.json(orders);
   } catch (err) {
     console.error('Error en getAllOrders:', err);
     return res.status(500).json({ message: 'Error al obtener órdenes' });
@@ -183,14 +152,7 @@ exports.updateOrderStatus = async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
     order.status = status;
     await order.save();
-    const msg =
-      status === 'received'
-        ? 'La tienda ha recibido tu pedido y lo est\u00e1 preparando.'
-        : 'Estado actualizado';
-    return res.json({
-      ...formatOrder(order),
-      message: msg,
-    });
+    return res.json(order);
   } catch (err) {
     console.error('Error en updateOrderStatus:', err);
     return res.status(500).json({ message: 'Error al actualizar estado' });
