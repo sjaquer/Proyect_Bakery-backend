@@ -17,8 +17,8 @@ Order.init(
       allowNull: false
     },
     status: {
-      // Ajusta el ENUM a los valores de tu tipo PostgreSQL
-      type: DataTypes.ENUM('pending', 'delivered', 'cancelled'),
+      // Posibles estados del pedido
+      type: DataTypes.ENUM('pending', 'received', 'delivered', 'cancelled'),
       defaultValue: 'pending'
     },
     paymentMethod: {
