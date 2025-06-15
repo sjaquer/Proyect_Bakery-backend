@@ -35,13 +35,16 @@ app.use('/api/orders',    orderRoutes);
 // … monta aquí el resto de tus rutas …
 
 // Conexión a la base de datos
-const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
-});
+// Reutilizamos la instancia de Sequelize definida en config/database.js
+const sequelize = require('./config/database');
+
 sequelize
   .authenticate()
-  .then(() => console.log('🔌 Conectando a PostgreSQL via DATABASE_URL'))
+  .then(async () => {
+    console.log('🔌 Conectando a PostgreSQL via DATABASE_URL');
+    // Sincroniza modelos para asegurarse de que existan todas las columnas
+    await sequelize.sync({ alter: true });
+  })
   .catch((err) => console.error('❌ Error al conectar BD:', err));
 
 // Inicia el servidor
