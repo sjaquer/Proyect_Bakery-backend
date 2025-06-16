@@ -8,6 +8,7 @@ const Order           = require('../models/Order');
 const OrderItem       = require('../models/OrderItem');
 const Product         = require('../models/Product');
 const Customer        = require('../models/Customer'); // o User si usas User
+const orderEvents     = require('../utils/orderEvents');
 
 // Convierte ids numéricos a strings para evitar errores en el frontend
 const formatOrder = (ord) => {
@@ -97,7 +98,11 @@ exports.createOrder = async (req, res) => {
             as: 'OrderItems',
             include: [{ model: Product, as: 'Product', attributes: ['id', 'name', 'price'] }]
           },
-          { model: Customer, as: 'Customer', attributes: ['id', 'name', 'email'] }
+          {
+            model: Customer,
+            as: 'Customer',
+            attributes: ['id', 'name', 'email', 'phone', 'address']
+          }
         ],
         transaction: tx
       });
@@ -123,20 +128,28 @@ exports.createOrder = async (req, res) => {
 exports.getCustomerOrders = async (req, res) => {
   try {
     const customerId = req.user.id;
+    const include = [
+      {
+        model: OrderItem,
+        as: 'OrderItems',
+        include: [{
+          model: Product,
+          as: 'Product',
+          attributes: ['id', 'name', 'price']
+        }]
+      }
+    ];
+    if (req.query.expand === 'customer') {
+      include.push({
+        model: Customer,
+        as: 'Customer',
+        attributes: ['id', 'name', 'email', 'phone', 'address']
+      });
+    }
     const orders = await Order.findAll({
       where: { customerId },
-      include: [
-        {
-          model: OrderItem,
-          as: 'OrderItems',              // ← coincide con Order.hasMany(..., { as: 'OrderItems' })
-          include: [{
-            model: Product,
-            as: 'Product',                // ← coincide con OrderItem.belongsTo(Product, { as: 'Product' })
-            attributes: ['id','name','price']
-          }]
-        }
-      ],
-      order: [['createdAt','DESC']]
+      include,
+      order: [['createdAt', 'DESC']]
     });
     return res.json(orders.map(formatOrder));
   } catch (err) {
@@ -148,24 +161,27 @@ exports.getCustomerOrders = async (req, res) => {
 // Listar todas las órdenes (admin)
 exports.getAllOrders = async (req, res) => {
   try {
+    const include = [
+      {
+        model: OrderItem,
+        as: 'OrderItems',
+        include: [{
+          model: Product,
+          as: 'Product',
+          attributes: ['id', 'name', 'price']
+        }]
+      }
+    ];
+    if (req.query.expand === 'customer') {
+      include.push({
+        model: Customer,
+        as: 'Customer',
+        attributes: ['id', 'name', 'email', 'phone', 'address']
+      });
+    }
     const orders = await Order.findAll({
-      include: [
-        {
-          model: OrderItem,
-          as: 'OrderItems',              // ← mismo alias
-          include: [{ 
-            model: Product, 
-            as: 'Product', 
-            attributes: ['id','name','price'] 
-          }]
-        },
-        {
-          model: Customer,
-          as: 'Customer',
-          attributes: ['id','name','email']
-        }
-      ],
-      order: [['createdAt','DESC']]
+      include,
+      order: [['createdAt', 'DESC']]
     });
     return res.json(orders.map(formatOrder));
   } catch (err) {
@@ -183,6 +199,7 @@ exports.updateOrderStatus = async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
     order.status = status;
     await order.save();
+    orderEvents.emit('orders-updated', { id: order.id });
     const msg =
       status === 'received'
         ? 'La tienda ha recibido tu pedido y lo est\u00e1 preparando.'
@@ -194,5 +211,62 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (err) {
     console.error('Error en updateOrderStatus:', err);
     return res.status(500).json({ message: 'Error al actualizar estado' });
+  }
+};
+
+// Obtener orden por ID
+exports.getOrderById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const include = [
+      {
+        model: OrderItem,
+        as: 'OrderItems',
+        include: [{
+          model: Product,
+          as: 'Product',
+          attributes: ['id', 'name', 'price']
+        }]
+      }
+    ];
+    if (req.query.expand === 'customer') {
+      include.push({
+        model: Customer,
+        as: 'Customer',
+        attributes: ['id', 'name', 'email', 'phone', 'address']
+      });
+    }
+    const order = await Order.findByPk(id, { include });
+    if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
+    if (
+      req.user.role !== 'admin' &&
+      String(order.customerId) !== String(req.user.id)
+    ) {
+      return res.status(403).json({ message: 'Acceso denegado' });
+    }
+    return res.json(formatOrder(order));
+  } catch (err) {
+    console.error('Error en getOrderById:', err);
+    return res.status(500).json({ message: 'Error al obtener orden' });
+  }
+};
+
+// Eliminar orden
+exports.deleteOrder = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const order = await Order.findByPk(id);
+    if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
+    const isOwner = String(order.customerId) === String(req.user.id);
+    const isAdmin = req.user.role === 'admin';
+    if (!isAdmin && (!isOwner || order.status !== 'pending')) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+    await order.destroy();
+    orderEvents.emit('orders-updated', { id: order.id });
+    return res.status(204).end();
+  } catch (err) {
+    console.error('Error en deleteOrder:', err);
+    return res.status(500).json({ message: 'Error al eliminar orden' });
   }
 };
