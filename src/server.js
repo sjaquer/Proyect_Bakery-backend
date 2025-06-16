@@ -4,6 +4,7 @@ require('dotenv').config();
 const express      = require('express');
 const cors         = require('cors');
 const cookieParser = require('cookie-parser');
+const orderEvents  = require('./utils/orderEvents');
 
 // Importa tus routers
 const authRoutes    = require('./routes/authRoutes');
@@ -32,6 +33,9 @@ app.use(
 app.use('/api/auth',     authRoutes);
 app.use('/api/products',  productRoutes);
 app.use('/api/orders',    orderRoutes);
+app.get('/api/orders/stream', (req, res) => {
+  orderEvents.register(res);
+});
 // … monta aquí el resto de tus rutas …
 
 // Conexión a la base de datos
