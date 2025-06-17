@@ -18,8 +18,18 @@ Order.init(
     },
     status: {
       // Posibles estados del pedido
-      type: DataTypes.ENUM('pending', 'received', 'delivered', 'cancelled'),
+      type: DataTypes.ENUM(
+        'pending',
+        'received',
+        'delivered',
+        'cancelled',
+        'rejected'
+      ),
       defaultValue: 'pending'
+    },
+    rejectionReason: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     paymentMethod: {
       type: DataTypes.STRING(20),

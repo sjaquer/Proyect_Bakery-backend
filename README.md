@@ -47,6 +47,14 @@ Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo
 }
 ```
 
+### Actualizar estado de un pedido
+
+Para cambiar el estado de una orden envía una solicitud `PUT` a
+`/api/orders/:id/status` con un cuerpo JSON que incluya el nuevo `status`.
+Los valores permitidos son `pending`, `received`, `delivered`, `cancelled` y
+`rejected`. Si el estado es `rejected` puedes incluir un campo opcional
+`reason` que será almacenado como `rejectionReason`.
+
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para discutir cambios.
