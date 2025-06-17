@@ -10,11 +10,14 @@ const Product         = require('../models/Product');
 const Customer        = require('../models/Customer'); // o User si usas User
 const orderEvents     = require('../utils/orderEvents');
 
+const allowedStatuses = Order.rawAttributes.status.values;
+
 // Convierte ids numéricos a strings para evitar errores en el frontend
 const formatOrder = (ord) => {
   if (!ord) return ord;
   const plain = ord.get ? ord.get({ plain: true }) : ord;
   plain.id = plain.id.toString();
+  if (plain.rejectionReason === undefined) plain.rejectionReason = null;
   if (plain.customerId !== undefined) plain.customerId = String(plain.customerId);
   if (plain.Customer) {
     plain.Customer.id = String(plain.Customer.id);
@@ -193,11 +196,19 @@ exports.getAllOrders = async (req, res) => {
 // Actualizar estado de la orden
 exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, reason } = req.body;
   try {
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Estado no v\u00e1lido' });
+    }
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
     order.status = status;
+    if (status === 'rejected') {
+      order.rejectionReason = reason;
+    } else {
+      order.rejectionReason = null;
+    }
     await order.save();
     orderEvents.emit('orders-updated', { id: order.id });
     const msg =
