@@ -225,6 +225,87 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+// Modificar una orden pendiente (cliente)
+exports.modifyOrder = async (req, res) => {
+  const { id } = req.params;
+  const { items, address, cancel } = req.body;
+  try {
+    const order = await Order.findByPk(id, {
+      include: [{ model: OrderItem, as: 'OrderItems' }]
+    });
+    if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
+    if (String(order.customerId) !== String(req.user.id)) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+    if (order.status !== 'pending') {
+      return res
+        .status(400)
+        .json({ message: 'La orden no se puede modificar' });
+    }
+
+    if (cancel) {
+      order.status = 'cancelled';
+      await order.save();
+      orderEvents.emit('orders-updated', { id: order.id });
+      return res.json({ ...formatOrder(order), message: 'Pedido cancelado' });
+    }
+
+    if (address) {
+      const customer = await Customer.findByPk(order.customerId);
+      if (customer) {
+        customer.address = address;
+        await customer.save();
+      }
+    }
+
+    if (Array.isArray(items)) {
+      let total = 0;
+      for (const item of items) {
+        const orderItem = await OrderItem.findOne({
+          where: { id: item.id, orderId: id }
+        });
+        if (!orderItem) continue;
+        if (item.quantity <= 0) {
+          await orderItem.destroy();
+          continue;
+        }
+        orderItem.quantity = item.quantity;
+        orderItem.subtotal =
+          parseFloat(orderItem.priceUnit) * item.quantity;
+        await orderItem.save();
+      }
+      const updatedItems = await OrderItem.findAll({ where: { orderId: id } });
+      updatedItems.forEach((it) => {
+        total += parseFloat(it.subtotal);
+      });
+      order.total = total;
+      await order.save();
+    }
+
+    const updated = await Order.findByPk(order.id, {
+      include: [
+        {
+          model: OrderItem,
+          as: 'OrderItems',
+          include: [
+            { model: Product, as: 'Product', attributes: ['id', 'name', 'price'] }
+          ]
+        },
+        {
+          model: Customer,
+          as: 'Customer',
+          attributes: ['id', 'name', 'email', 'phone', 'address']
+        }
+      ]
+    });
+    orderEvents.emit('orders-updated', { id: order.id });
+    return res.json(formatOrder(updated));
+  } catch (err) {
+    console.error('Error en modifyOrder:', err);
+    return res.status(500).json({ message: 'Error al modificar orden' });
+  }
+};
+
 // Obtener orden por ID
 exports.getOrderById = async (req, res) => {
   const { id } = req.params;
