@@ -32,6 +32,21 @@ Para iniciar el servidor en modo desarrollo, ejecuta:
 npm run dev
 ```
 
+### Registro de usuario
+
+Para crear una cuenta envía un `POST` a `/api/auth/register` con los campos
+`name`, `email`, `password`, `phone` y `address`:
+
+```json
+{
+  "name": "Juan",
+  "email": "juan@example.com",
+  "password": "secreto",
+  "phone": "555-1234",
+  "address": "Calle Principal 123"
+}
+```
+
 ### Ejemplo de creación de producto
 
 Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo

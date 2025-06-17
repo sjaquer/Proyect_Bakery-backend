@@ -37,3 +37,7 @@ const Customer = sequelize.define('Customer', {
 });
 
 module.exports = Customer;
+
+// Asociación 1:1 con User
+const User = require('./User');
+Customer.belongsTo(User, { foreignKey: 'id', as: 'user' });
