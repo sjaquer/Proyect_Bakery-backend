@@ -4,13 +4,14 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Customer = require('../models/Customer');
 
 // @route   POST /api/auth/register
 // @desc    Registrar nuevo usuario
 // @access  Público
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, phone, address } = req.body;
 
     // 1) Verificar duplicado
     const exists = await User.findOne({ where: { email } });
@@ -30,6 +31,15 @@ exports.registerUser = async (req, res) => {
       role: role || 'customer',
     });
 
+    // 3b) Crear registro de Customer vinculado
+    await Customer.create({
+      id: newUser.id,
+      name,
+      phone,
+      email,
+      address,
+    });
+
     // 4) Generar token
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
@@ -45,6 +55,8 @@ exports.registerUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         createdAt: newUser.createdAt.toISOString(),
+        phone: phone || null,
+        address: address || null,
       },
       token,
     });
@@ -66,8 +78,13 @@ exports.loginUser = async (req, res) => {
 
     const { email, password } = req.body;
 
-    // 1) Buscar usuario
-    const user = await User.findOne({ where: { email } });
+    // 1) Buscar usuario con su información de contacto
+    const user = await User.findOne({
+      where: { email },
+      include: [
+        { model: Customer, as: 'customer', attributes: ['phone', 'address'] }
+      ]
+    });
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
@@ -93,6 +110,8 @@ exports.loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         createdAt: user.createdAt.toISOString(),
+        phone: user.customer?.phone || null,
+        address: user.customer?.address || null,
       },
       token,
     });
