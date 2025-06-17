@@ -10,6 +10,7 @@ const orderEvents  = require('./utils/orderEvents');
 const authRoutes    = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes   = require('./routes/orderRoutes');
+const userRoutes    = require('./routes/userRoutes');
 // … cualquier otro router …
 
 // Crea la app
@@ -33,6 +34,7 @@ app.use(
 app.use('/api/auth',     authRoutes);
 app.use('/api/products',  productRoutes);
 app.use('/api/orders',    orderRoutes);
+app.use('/api/users',     userRoutes);
 app.get('/api/orders/stream', (req, res) => {
   orderEvents.register(res);
 });
