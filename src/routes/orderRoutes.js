@@ -25,17 +25,9 @@ router.post(
 );
 router.get('/',            protect,           getCustomerOrders);
 router.get('/all',         protect,    isAdmin, getAllOrders);
-router.put('/:id/status',  protect,    isAdmin, updateOrderStatus);
-router.patch('/:id',       protect,           modifyOrder);
+router.patch('/:id', protect, modifyOrder);
 router.put(
   '/:id/status',
-  protect,
-  isAdmin,
-  validate({ status: { required: true } }),
-  updateOrderStatus
-);
-router.patch(
-  '/:id',
   protect,
   isAdmin,
   validate({ status: { required: true } }),
