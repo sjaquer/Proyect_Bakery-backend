@@ -9,7 +9,6 @@ const OrderItem       = require('../models/OrderItem');
 const Product         = require('../models/Product');
 const Customer        = require('../models/Customer'); // o User si usas User
 const orderEvents     = require('../utils/orderEvents');
-const { toSpanish }   = require('../utils/categoryTranslations');
 
 const allowedStatuses = Order.rawAttributes.status.values;
 
@@ -29,10 +28,7 @@ const formatOrder = (ord) => {
       item.id = String(item.id);
       if (item.orderId !== undefined) item.orderId = String(item.orderId);
       if (item.productId !== undefined) item.productId = String(item.productId);
-      if (item.Product) {
-        item.Product.id = String(item.Product.id);
-        item.Product.categoryName = toSpanish(item.Product.category);
-      }
+      if (item.Product) item.Product.id = String(item.Product.id);
       return item;
     });
   }
