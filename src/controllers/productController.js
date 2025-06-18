@@ -4,6 +4,7 @@
 // - getAllProducts, getProductById, createProduct, updateProduct, deleteProduct
 
 const Product = require('../models/Product');
+const { toSpanish } = require('../utils/categoryTranslations');
 
 // @route   GET /api/products
 // @desc    Obtener todos los productos
@@ -23,7 +24,12 @@ exports.getAllProducts = async (req, res, next) => {
         'updatedAt'
       ]
     });
-    res.json(products);
+    const translated = products.map(p => {
+      const plain = p.get({ plain: true });
+      plain.categoryName = toSpanish(plain.category);
+      return plain;
+    });
+    res.json(translated);
   } catch (err) {
     next(err);
   }
@@ -40,7 +46,9 @@ exports.getProductById = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
-    res.json(product);
+    const plain = product.get({ plain: true });
+    plain.categoryName = toSpanish(plain.category);
+    res.json(plain);
   } catch (err) {
     next(err);
   }
@@ -60,7 +68,9 @@ exports.createProduct = async (req, res, next) => {
       category,
       imageUrl,
     });
-    res.status(201).json(newProduct);
+    const plain = newProduct.get({ plain: true });
+    plain.categoryName = toSpanish(plain.category);
+    res.status(201).json(plain);
   } catch (err) {
     next(err);
   }
@@ -80,7 +90,9 @@ exports.updateProduct = async (req, res, next) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
     const updatedProduct = await Product.findByPk(req.params.id);
-    res.json(updatedProduct);
+    const plain = updatedProduct.get({ plain: true });
+    plain.categoryName = toSpanish(plain.category);
+    res.json(plain);
   } catch (err) {
     next(err);
   }
