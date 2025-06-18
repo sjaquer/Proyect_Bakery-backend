@@ -31,6 +31,7 @@ const Product = sequelize.define('Product', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0,
+    validate: { min: 0 },
   },
   category: {
     type: DataTypes.STRING(50),
