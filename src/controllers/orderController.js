@@ -99,7 +99,7 @@ exports.createOrder = async (req, res) => {
           {
             model: OrderItem,
             as: 'OrderItems',
-            include: [{ model: Product, as: 'Product', attributes: ['id', 'name', 'price'] }]
+            include: [{ model: Product, as: 'Product', attributes: ['id', 'name', 'price', 'category', 'imageUrl'] }]
           },
           {
             model: Customer,
@@ -138,7 +138,7 @@ exports.getCustomerOrders = async (req, res) => {
         include: [{
           model: Product,
           as: 'Product',
-          attributes: ['id', 'name', 'price']
+          attributes: ['id', 'name', 'price', 'category', 'imageUrl']
         }]
       }
     ];
@@ -171,7 +171,7 @@ exports.getAllOrders = async (req, res) => {
         include: [{
           model: Product,
           as: 'Product',
-          attributes: ['id', 'name', 'price']
+          attributes: ['id', 'name', 'price', 'category', 'imageUrl']
         }]
       }
     ];
@@ -288,7 +288,7 @@ exports.modifyOrder = async (req, res) => {
           model: OrderItem,
           as: 'OrderItems',
           include: [
-            { model: Product, as: 'Product', attributes: ['id', 'name', 'price'] }
+            { model: Product, as: 'Product', attributes: ['id', 'name', 'price', 'category', 'imageUrl'] }
           ]
         },
         {
@@ -317,7 +317,7 @@ exports.getOrderById = async (req, res) => {
         include: [{
           model: Product,
           as: 'Product',
-          attributes: ['id', 'name', 'price']
+          attributes: ['id', 'name', 'price', 'category', 'imageUrl']
         }]
       }
     ];

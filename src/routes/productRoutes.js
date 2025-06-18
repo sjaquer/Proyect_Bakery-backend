@@ -28,6 +28,7 @@ router.post(
     description: { required: true },
     price: { required: true, type: 'number' },
     stock: { required: true, type: 'integer' },
+    category: { required: true },
     imageUrl: {}
   }),
   productController.createProduct
@@ -43,6 +44,7 @@ router.put(
     description: {},
     price: { type: 'number' },
     stock: { type: 'integer' },
+    category: {},
     imageUrl: {}
   }),
   productController.updateProduct
