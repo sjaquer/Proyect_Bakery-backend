@@ -62,6 +62,17 @@ Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo
 }
 ```
 
+### Obtener categorías disponibles
+
+Envía una petición `GET` a `/api/products/categories` para obtener las categorías
+de productos en español.
+
+### Actualizar solo el stock de un producto
+
+Para modificar únicamente la cantidad disponible utiliza
+`PATCH /api/products/:id/stock` enviando un JSON con el campo `stock` (entero
+mayor o igual a 0).
+
 ### Actualizar estado de un pedido
 
 Para cambiar el estado de una orden envía una solicitud `PUT` a

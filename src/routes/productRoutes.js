@@ -14,6 +14,9 @@ const { protect, isAdmin } = require('../middleware/authMiddleware');
 // GET /api/products          → Lista todos los productos
 router.get('/', productController.getAllProducts);
 
+// GET /api/products/categories → Lista de categorías en español
+router.get('/categories', productController.getCategories);
+
 // GET /api/products/:id      → Detalle de un producto
 router.get('/:id', productController.getProductById);
 
@@ -27,7 +30,7 @@ router.post(
     name: { required: true },
     description: { required: true },
     price: { required: true, type: 'number' },
-    stock: { required: true, type: 'integer' },
+    stock: { required: true, type: 'integer', min: 0 },
     category: { required: true },
     imageUrl: {}
   }),
@@ -43,7 +46,7 @@ router.put(
     name: {},
     description: {},
     price: { type: 'number' },
-    stock: { type: 'integer' },
+    stock: { type: 'integer', min: 0 },
     category: {},
     imageUrl: {}
   }),
@@ -52,5 +55,14 @@ router.put(
 
 // DELETE /api/products/:id   → Eliminar producto
 router.delete('/:id', protect, isAdmin, productController.deleteProduct);
+
+// PATCH /api/products/:id/stock → Actualizar solo el stock
+router.patch(
+  '/:id/stock',
+  protect,
+  isAdmin,
+  validate({ stock: { required: true, type: 'integer', min: 0 } }),
+  productController.updateProductStock
+);
 
 module.exports = router;

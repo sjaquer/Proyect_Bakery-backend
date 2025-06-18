@@ -39,6 +39,11 @@ function validate(schema = {}) {
       if (rules.regex && typeof value === 'string' && !rules.regex.test(value)) {
         errors.push(`${field} is invalid`);
       }
+
+      // Minimum value validation
+      if (rules.min !== undefined && Number(value) < rules.min) {
+        errors.push(`${field} must be >= ${rules.min}`);
+      }
     }
 
     if (errors.length) {
