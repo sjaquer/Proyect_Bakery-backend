@@ -16,7 +16,9 @@ exports.getAllProducts = async (req, res, next) => {
         'name',
         'description',
         'price',
-        'stock',       // Asegúrate de que este campo exista en tu modelo
+        'stock',
+        'category',
+        'imageUrl',
         'createdAt',
         'updatedAt'
       ]
@@ -33,7 +35,7 @@ exports.getAllProducts = async (req, res, next) => {
 exports.getProductById = async (req, res, next) => {
   try {
     const product = await Product.findByPk(req.params.id, {
-      attributes: ['id', 'name', 'description', 'price', 'stock']
+      attributes: ['id', 'name', 'description', 'price', 'stock', 'category', 'imageUrl']
     });
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
@@ -49,12 +51,13 @@ exports.getProductById = async (req, res, next) => {
 // @access  Privado (admin)
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, stock, imageUrl } = req.body;
+    const { name, description, price, stock, category, imageUrl } = req.body;
     const newProduct = await Product.create({
       name,
       description,
       price,
       stock,
+      category,
       imageUrl,
     });
     res.status(201).json(newProduct);
@@ -68,9 +71,9 @@ exports.createProduct = async (req, res, next) => {
 // @access  Privado (admin)
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, description, price, stock, imageUrl } = req.body;
+    const { name, description, price, stock, category, imageUrl } = req.body;
     const [updated] = await Product.update(
-      { name, description, price, stock, imageUrl },
+      { name, description, price, stock, category, imageUrl },
       { where: { id: req.params.id } }
     );
     if (!updated) {
