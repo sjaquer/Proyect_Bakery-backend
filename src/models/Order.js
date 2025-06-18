@@ -21,6 +21,8 @@ Order.init(
       type: DataTypes.ENUM(
         'pending',
         'received',
+        'preparing',
+        'ready',
         'delivered',
         'cancelled',
         'rejected'
