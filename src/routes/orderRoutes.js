@@ -17,9 +17,9 @@ const { protect, isAdmin } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
 
 // Rutas de pedidos
-// Se permite POST sin JWT para invitado (createOrder internamente gestiona guest)
 router.post(
   '/',
+  protect,
   validate({ items: { required: true, type: 'array' }, paymentMethod: { required: true } }),
   createOrder
 );
