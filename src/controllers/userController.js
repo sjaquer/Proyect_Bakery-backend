@@ -7,7 +7,7 @@ const Customer = require('../models/Customer');
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'email', 'role', 'createdAt'],
+      attributes: ['id', 'name', 'email', 'role', 'createdAt', 'phone', 'address'],
     });
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -21,8 +21,8 @@ exports.getProfile = async (req, res) => {
       email: user.email,
       role: user.role,
       createdAt: user.createdAt.toISOString(),
-      phone: customer ? customer.phone : null,
-      address: customer ? customer.address : null,
+      phone: user.phone || (customer ? customer.phone : null),
+      address: user.address || (customer ? customer.address : null),
     });
   } catch (err) {
     console.error('Error getProfile:', err);
@@ -36,14 +36,25 @@ exports.updateProfile = async (req, res) => {
     const { name, phone, email, address } = req.body;
     const userId = req.user.id;
 
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+    await user.save();
+
     let customer = await Customer.findByPk(userId);
     if (!customer) {
       customer = await Customer.create({
         id: userId,
-        name: name || '',
-        phone: phone || '',
-        email: email || '',
-        address: address || '',
+        name: user.name,
+        phone: user.phone || '',
+        email: user.email,
+        address: user.address || '',
       });
     } else {
       if (name !== undefined) customer.name = name;
@@ -53,18 +64,14 @@ exports.updateProfile = async (req, res) => {
       await customer.save();
     }
 
-    const user = await User.findByPk(userId, {
-      attributes: ['id', 'name', 'email', 'role', 'createdAt'],
-    });
-
     return res.json({
       id: String(user.id),
       name: user.name,
       email: user.email,
       role: user.role,
       createdAt: user.createdAt.toISOString(),
-      phone: customer.phone,
-      address: customer.address,
+      phone: user.phone,
+      address: user.address,
     });
   } catch (err) {
     console.error('Error updateProfile:', err);

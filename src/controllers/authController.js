@@ -29,6 +29,8 @@ exports.registerUser = async (req, res) => {
       email,
       password: hashed,
       role: role || 'customer',
+      phone,
+      address,
     });
 
     // 3b) Crear registro de Customer vinculado
@@ -55,8 +57,8 @@ exports.registerUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         createdAt: newUser.createdAt.toISOString(),
-        phone: phone || null,
-        address: address || null,
+        phone: newUser.phone || null,
+        address: newUser.address || null,
       },
       token,
     });
@@ -83,7 +85,8 @@ exports.loginUser = async (req, res) => {
       where: { email },
       include: [
         { model: Customer, as: 'customer', attributes: ['phone', 'address'] }
-      ]
+      ],
+      attributes: { include: ['phone', 'address'] }
     });
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -110,8 +113,8 @@ exports.loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         createdAt: user.createdAt.toISOString(),
-        phone: user.customer?.phone || null,
-        address: user.customer?.address || null,
+        phone: user.phone || user.customer?.phone || null,
+        address: user.address || user.customer?.address || null,
       },
       token,
     });
