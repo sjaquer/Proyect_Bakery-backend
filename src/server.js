@@ -11,6 +11,7 @@ const authRoutes    = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes   = require('./routes/orderRoutes');
 const userRoutes    = require('./routes/userRoutes');
+const { protect }   = require('./middleware/authMiddleware');
 // … cualquier otro router …
 
 // Crea la app
@@ -35,7 +36,7 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/products',  productRoutes);
 app.use('/api/orders',    orderRoutes);
 app.use('/api/users',     userRoutes);
-app.get('/api/orders/stream', (req, res) => {
+app.get('/api/orders/stream', protect, (req, res) => {
   orderEvents.register(res);
 });
 // … monta aquí el resto de tus rutas …

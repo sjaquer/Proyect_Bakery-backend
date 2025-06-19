@@ -1,6 +1,7 @@
 // src/models/Order.js
 const { Model, DataTypes } = require('sequelize');
 const sequelize  = require('../config/database');
+const User       = require('./User');
 const Customer   = require('./Customer');
 const OrderItem  = require('./OrderItem');
 
@@ -45,11 +46,10 @@ Order.init(
       type: DataTypes.INTEGER, // minutos u otro
       allowNull: true
     },
-    customerId: {
-      // En tu tabla es customerId
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'customerId'
+      field: 'userId'
     }
   },
   {
@@ -64,9 +64,9 @@ Order.init(
 
 // Asociaciones
 
-// 1) Cliente ↔ Pedidos
-Customer.hasMany(Order,    { foreignKey: 'customerId', as: 'orders' });
-Order.belongsTo(Customer,  { foreignKey: 'customerId', as: 'Customer' });
+// 1) Usuario ↔ Pedidos
+User.hasMany(Order,    { foreignKey: 'userId', as: 'orders' });
+Order.belongsTo(User,  { foreignKey: 'userId', as: 'User' });
 
 // 2) Pedido ↔ Líneas de pedido
 Order.hasMany(OrderItem,   { foreignKey: 'orderId', as: 'OrderItems' });

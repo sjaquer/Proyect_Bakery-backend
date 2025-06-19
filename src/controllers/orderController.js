@@ -7,7 +7,8 @@ const sequelize       = require('../config/database');
 const Order           = require('../models/Order');
 const OrderItem       = require('../models/OrderItem');
 const Product         = require('../models/Product');
-const Customer        = require('../models/Customer'); // o User si usas User
+const User            = require('../models/User');
+const Customer        = require('../models/Customer');
 const orderEvents     = require('../utils/orderEvents');
 
 const allowedStatuses = Order.rawAttributes.status.values;
@@ -18,9 +19,9 @@ const formatOrder = (ord) => {
   const plain = ord.get ? ord.get({ plain: true }) : ord;
   plain.id = plain.id.toString();
   if (plain.rejectionReason === undefined) plain.rejectionReason = null;
-  if (plain.customerId !== undefined) plain.customerId = String(plain.customerId);
-  if (plain.Customer) {
-    plain.Customer.id = String(plain.Customer.id);
+  if (plain.userId !== undefined) plain.userId = String(plain.userId);
+  if (plain.User) {
+    plain.User.id = String(plain.User.id);
   }
   if (Array.isArray(plain.OrderItems)) {
     plain.OrderItems = plain.OrderItems.map((it) => {
@@ -37,26 +38,17 @@ const formatOrder = (ord) => {
 
 // Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
-  const { items, customerInfo, paymentMethod } = req.body;
+  const { items, paymentMethod } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'Datos de orden incompletos' });
   }
   try {
     const result = await sequelize.transaction(async (tx) => {
-      let customerId = req.user?.id;
-      if (!customerId) {
-        // Invitado: crear o buscar Customer por teléfono
-        const { name, phone, email, address } = customerInfo;
-        const [customer] = await Customer.findOrCreate({
-          where: { phone },
-          defaults: { name, email, address }
-        });
-        customerId = customer.id;
-      }
+      const userId = req.user.id;
 
       // 1) Crear la orden inicial
       const order = await Order.create(
-        { customerId, status: 'pending', paymentMethod, total: 0 },
+        { userId, status: 'pending', paymentMethod, total: 0 },
         { transaction: tx }
       );
 
@@ -102,9 +94,9 @@ exports.createOrder = async (req, res) => {
             include: [{ model: Product, as: 'Product', attributes: ['id', 'name', 'price', 'category', 'imageUrl'] }]
           },
           {
-            model: Customer,
-            as: 'Customer',
-            attributes: ['id', 'name', 'email', 'phone', 'address']
+            model: User,
+            as: 'User',
+            attributes: ['id', 'name', 'email', 'role']
           }
         ],
         transaction: tx
@@ -130,7 +122,11 @@ exports.createOrder = async (req, res) => {
 // Listar órdenes de un cliente
 exports.getCustomerOrders = async (req, res) => {
   try {
-    const customerId = req.user.id;
+    const { userId } = req.query;
+    if (userId && String(userId) !== String(req.user.id)) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+    const targetId = userId || req.user.id;
     const include = [
       {
         model: OrderItem,
@@ -142,15 +138,15 @@ exports.getCustomerOrders = async (req, res) => {
         }]
       }
     ];
-    if (req.query.expand === 'customer') {
+    if (req.query.expand === 'user') {
       include.push({
-        model: Customer,
-        as: 'Customer',
-        attributes: ['id', 'name', 'email', 'phone', 'address']
+        model: User,
+        as: 'User',
+        attributes: ['id', 'name', 'email', 'role']
       });
     }
     const orders = await Order.findAll({
-      where: { customerId },
+      where: { userId: targetId },
       include,
       order: [['createdAt', 'DESC']]
     });
@@ -175,11 +171,11 @@ exports.getAllOrders = async (req, res) => {
         }]
       }
     ];
-    if (req.query.expand === 'customer') {
+    if (req.query.expand === 'user') {
       include.push({
-        model: Customer,
-        as: 'Customer',
-        attributes: ['id', 'name', 'email', 'phone', 'address']
+        model: User,
+        as: 'User',
+        attributes: ['id', 'name', 'email', 'role']
       });
     }
     const orders = await Order.findAll({
@@ -234,7 +230,7 @@ exports.modifyOrder = async (req, res) => {
       include: [{ model: OrderItem, as: 'OrderItems' }]
     });
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
-    if (String(order.customerId) !== String(req.user.id)) {
+    if (String(order.userId) !== String(req.user.id)) {
       return res.status(403).json({ message: 'No autorizado' });
     }
     if (order.status !== 'pending') {
@@ -251,7 +247,7 @@ exports.modifyOrder = async (req, res) => {
     }
 
     if (address) {
-      const customer = await Customer.findByPk(order.customerId);
+      const customer = await Customer.findByPk(order.userId);
       if (customer) {
         customer.address = address;
         await customer.save();
@@ -292,9 +288,9 @@ exports.modifyOrder = async (req, res) => {
           ]
         },
         {
-          model: Customer,
-          as: 'Customer',
-          attributes: ['id', 'name', 'email', 'phone', 'address']
+          model: User,
+          as: 'User',
+          attributes: ['id', 'name', 'email', 'role']
         }
       ]
     });
@@ -321,18 +317,18 @@ exports.getOrderById = async (req, res) => {
         }]
       }
     ];
-    if (req.query.expand === 'customer') {
+    if (req.query.expand === 'user') {
       include.push({
-        model: Customer,
-        as: 'Customer',
-        attributes: ['id', 'name', 'email', 'phone', 'address']
+        model: User,
+        as: 'User',
+        attributes: ['id', 'name', 'email', 'role']
       });
     }
     const order = await Order.findByPk(id, { include });
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
     if (
       req.user.role !== 'admin' &&
-      String(order.customerId) !== String(req.user.id)
+      String(order.userId) !== String(req.user.id)
     ) {
       return res.status(403).json({ message: 'Acceso denegado' });
     }
@@ -349,7 +345,7 @@ exports.deleteOrder = async (req, res) => {
   try {
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
-    const isOwner = String(order.customerId) === String(req.user.id);
+    const isOwner = String(order.userId) === String(req.user.id);
     const isAdmin = req.user.role === 'admin';
     if (!isAdmin && (!isOwner || order.status !== 'pending')) {
       return res.status(403).json({ message: 'No autorizado' });
