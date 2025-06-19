@@ -70,6 +70,19 @@ Los valores permitidos son `pending`, `received`, `preparing`, `ready`,
 `delivered`, `cancelled` y `rejected`. Si el estado es `rejected` puedes incluir un campo opcional
 `reason` que será almacenado como `rejectionReason`.
 
+### Perfil de usuario
+
+Un usuario autenticado puede obtener o modificar su perfil accediendo al
+endpoint `/api/users/profile`.
+
+- **GET `/api/users/profile`**: devuelve un objeto con los campos `id`,
+  `name`, `email`, `role`, `createdAt`, `phone` y `address`.
+- **PUT `/api/users/profile`**: actualiza los datos de `name`, `phone`,
+  `email` y `address`.
+
+Esto permite que el frontend rellene automáticamente la información de
+contacto al crear una orden.
+
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para discutir cambios.
