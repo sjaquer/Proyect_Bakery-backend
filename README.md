@@ -1,41 +1,79 @@
 # Proyecto de Backend de Panadería
 
-Este proyecto es una aplicación de backend para la gestión de una panadería. Permite la autenticación de usuarios, la gestión de productos y pedidos, y la interacción con una base de datos.
+Este proyecto es una API REST para la gestión integral de una panadería. Está construida con **Node.js**, **Express** y **Sequelize** sobre una base de datos **PostgreSQL**. Proporciona autenticación de usuarios, administración de productos y manejo de pedidos.
 
-## Características
+## Características principales
 
-- Autenticación de usuarios
-- Gestión de productos
-- Gestión de pedidos
-- Interacción con base de datos PostgreSQL
+- Registro e inicio de sesión de usuarios mediante JSON Web Tokens
+- CRUD de productos con imágenes
+- Creación y seguimiento de pedidos
+- Streaming de eventos de pedidos usando **Server-Sent Events**
+- Configuración sencilla mediante variables de entorno
+
+## Requisitos
+
+- Node.js 18 o superior
+- Una instancia de PostgreSQL
 
 ## Instalación
 
-1. Clona el repositorio:
-   ```
+1. Clona el repositorio
+   ```bash
    git clone <URL_DEL_REPOSITORIO>
-   ```
-2. Navega al directorio del proyecto:
-   ```
    cd Proyect_Bakery-backend
    ```
-3. Instala las dependencias:
-   ```
+2. Instala las dependencias
+   ```bash
    npm install
    ```
-4. Configura el archivo `.env` con tus credenciales de base de datos.
+3. Crea un archivo `.env` con el siguiente contenido (ajusta los valores según tu entorno):
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=bakery
+   DB_USER=usuario
+   DB_PASS=contraseña
+   JWT_SECRET=clave_secreta
+   PORT=4000          # opcional
+   # Opcional para exponer tu servidor con ngrok
+   NGROK_AUTHTOKEN=tu_token
+   ```
+   También puedes utilizar `DATABASE_URL` si empleas un proveedor que lo suministre.
 
-## Uso
+## Ejecución
 
-Para iniciar el servidor en modo desarrollo, ejecuta:
-```
-npm run dev
-```
+- **Modo desarrollo**: reinicio automático con `nodemon`
+  ```bash
+  npm run dev
+  ```
+- **Modo producción**:
+  ```bash
+  npm start
+  ```
+- **Exponer localmente con ngrok** (requiere `NGROK_AUTHTOKEN`):
+  ```bash
+  npm run tunnel
+  ```
+- **Poblar la base de datos con datos de ejemplo**:
+  ```bash
+  node scripts/seed.js
+  ```
+- **Crear usuario administrador por defecto**:
+  ```bash
+  node scripts/createAdmin.js
+  ```
 
-### Registro de usuario
+## Endpoints destacados
 
-Para crear una cuenta envía un `POST` a `/api/auth/register` con los campos
-`name`, `email`, `password`, `phone` y `address`:
+- `POST /api/auth/register` – registro de usuarios
+- `POST /api/auth/login` – autenticación y obtención de token
+- `GET /api/products` – listado de productos
+- `POST /api/orders` – creación de un pedido
+- `PUT /api/orders/:id/status` – actualizar estado del pedido
+- `GET /api/orders/stream` – suscripción a eventos de cambios en pedidos
+- `GET/PUT /api/users/profile` – consulta o actualización del perfil
+
+### Ejemplo de payload para registrar un usuario
 
 ```json
 {
@@ -47,10 +85,7 @@ Para crear una cuenta envía un `POST` a `/api/auth/register` con los campos
 }
 ```
 
-### Ejemplo de creación de producto
-
-Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo
-`imageUrl` junto con el resto de datos del producto. Ejemplo de payload:
+### Ejemplo para crear un producto
 
 ```json
 {
@@ -62,31 +97,23 @@ Al enviar una solicitud `POST` a `/api/products`, puedes incluir el campo
 }
 ```
 
-### Actualizar estado de un pedido
+### Cambiar el estado de un pedido
 
-Para cambiar el estado de una orden envía una solicitud `PUT` a
-`/api/orders/:id/status` con un cuerpo JSON que incluya el nuevo `status`.
-Los valores permitidos son `pending`, `received`, `preparing`, `ready`,
-`delivered`, `cancelled` y `rejected`. Si el estado es `rejected` puedes incluir un campo opcional
-`reason` que será almacenado como `rejectionReason`.
+Envia un `PUT` a `/api/orders/:id/status` con un cuerpo como este:
 
-### Perfil de usuario
+```json
+{
+  "status": "ready",
+  "reason": "opcional si es rechazado"
+}
+```
 
-Un usuario autenticado puede obtener o modificar su perfil accediendo al
-endpoint `/api/users/profile`.
+Los estados válidos son `pending`, `received`, `preparing`, `ready`, `delivered`, `cancelled` y `rejected`.
 
-- **GET `/api/users/profile`**: devuelve un objeto con los campos `id`,
-  `name`, `email`, `role`, `createdAt`, `phone` y `address`.
-- **PUT `/api/users/profile`**: actualiza los datos de `name`, `phone`,
-  `email` y `address`.
+## Contribuir
 
-Esto permite que el frontend rellene automáticamente la información de
-contacto al crear una orden.
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para discutir cambios.
+¡Las contribuciones son bienvenidas! Abre un issue o un pull request para proponer mejoras o arreglos.
 
 ## Licencia
 
-Este proyecto está bajo la Licencia ISC.
+Distribuido bajo la licencia ISC.
