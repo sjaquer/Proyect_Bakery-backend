@@ -29,7 +29,8 @@ router.post(
     price: { required: true, type: 'number' },
     stock: { required: true, type: 'integer' },
     category: { required: true },
-    imageUrl: {}
+    imageUrl: {},
+    featured: { type: 'boolean' }
   }),
   productController.createProduct
 );
@@ -45,7 +46,8 @@ router.put(
     price: { type: 'number' },
     stock: { type: 'integer' },
     category: {},
-    imageUrl: {}
+    imageUrl: {},
+    featured: { type: 'boolean' }
   }),
   productController.updateProduct
 );

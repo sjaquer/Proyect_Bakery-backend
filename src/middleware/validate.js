@@ -25,6 +25,10 @@ function validate(schema = {}) {
           errors.push(`${field} must be a number`);
         } else if (type === 'integer' && !Number.isInteger(Number(value))) {
           errors.push(`${field} must be an integer`);
+        } else if (type === 'boolean' && typeof value !== 'boolean') {
+          if (value !== 'true' && value !== 'false' && value !== 1 && value !== 0) {
+            errors.push(`${field} must be a boolean`);
+          }
         } else if (type === 'array' && !Array.isArray(value)) {
           errors.push(`${field} must be an array`);
         }

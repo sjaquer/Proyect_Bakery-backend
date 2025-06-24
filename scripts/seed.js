@@ -15,6 +15,7 @@ const seedProducts = [
     stock: 100,
     category: 'sweet',
     imageUrl: '',
+    featured: true,
   },
   {
     name: 'Bolillo Blanco',
@@ -23,6 +24,7 @@ const seedProducts = [
     stock: 200,
     category: 'bread',
     imageUrl: '',
+    featured: false,
   },
   {
     name: 'Pan de Muerto',
@@ -31,6 +33,7 @@ const seedProducts = [
     stock: 50,
     category: 'special',
     imageUrl: '',
+    featured: false,
   },
   {
     name: 'Pan Integral',
@@ -39,6 +42,7 @@ const seedProducts = [
     stock: 80,
     category: 'bread',
     imageUrl: '',
+    featured: false,
   },
   {
     name: 'Donut Chocolate',
@@ -47,6 +51,7 @@ const seedProducts = [
     stock: 120,
     category: 'sweet',
     imageUrl: '',
+    featured: false,
   },
 ];
 
