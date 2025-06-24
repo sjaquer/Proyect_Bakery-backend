@@ -96,7 +96,7 @@ exports.createOrder = async (req, res) => {
           {
             model: User,
             as: 'User',
-            attributes: ['id', 'name', 'email', 'role']
+            attributes: ['id', 'name', 'email', 'role', 'phone', 'address']
           }
         ],
         transaction: tx
@@ -142,7 +142,7 @@ exports.getCustomerOrders = async (req, res) => {
       include.push({
         model: User,
         as: 'User',
-        attributes: ['id', 'name', 'email', 'role']
+        attributes: ['id', 'name', 'email', 'role', 'phone', 'address']
       });
     }
     const orders = await Order.findAll({
@@ -175,7 +175,7 @@ exports.getAllOrders = async (req, res) => {
       include.push({
         model: User,
         as: 'User',
-        attributes: ['id', 'name', 'email', 'role']
+        attributes: ['id', 'name', 'email', 'role', 'phone', 'address']
       });
     }
     const orders = await Order.findAll({
@@ -290,7 +290,7 @@ exports.modifyOrder = async (req, res) => {
         {
           model: User,
           as: 'User',
-          attributes: ['id', 'name', 'email', 'role']
+          attributes: ['id', 'name', 'email', 'role', 'phone', 'address']
         }
       ]
     });
@@ -321,7 +321,7 @@ exports.getOrderById = async (req, res) => {
       include.push({
         model: User,
         as: 'User',
-        attributes: ['id', 'name', 'email', 'role']
+        attributes: ['id', 'name', 'email', 'role', 'phone', 'address']
       });
     }
     const order = await Order.findByPk(id, { include });
