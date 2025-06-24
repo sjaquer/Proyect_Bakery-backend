@@ -38,7 +38,7 @@ const formatOrder = (ord) => {
 
 // Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
-  const { items, paymentMethod } = req.body;
+  const { items, paymentMethod, isDelivery } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'Datos de orden incompletos' });
   }
@@ -48,7 +48,7 @@ exports.createOrder = async (req, res) => {
 
       // 1) Crear la orden inicial
       const order = await Order.create(
-        { userId, status: 'pending', paymentMethod, total: 0 },
+        { userId, status: 'pending', paymentMethod, isDelivery, total: 0 },
         { transaction: tx }
       );
 
