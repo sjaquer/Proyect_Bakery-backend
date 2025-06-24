@@ -37,6 +37,10 @@ Este proyecto es una API REST para la gestión integral de una panadería. Está
    PORT=4000          # opcional
    # Opcional para exponer tu servidor con ngrok
    NGROK_AUTHTOKEN=tu_token
+   # Credenciales para notificaciones por correo
+   OWNER_EMAIL=due\@example.com
+   OWNER_EMAIL_PASS=contrase\u00f1a
+   EMAIL_SERVICE=gmail
    ```
    También puedes utilizar `DATABASE_URL` si empleas un proveedor que lo suministre.
 

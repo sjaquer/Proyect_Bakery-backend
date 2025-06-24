@@ -10,6 +10,7 @@ const Product         = require('../models/Product');
 const User            = require('../models/User');
 const Customer        = require('../models/Customer');
 const orderEvents     = require('../utils/orderEvents');
+const { sendEmail }   = require('../utils/notify');
 
 const allowedStatuses = Order.rawAttributes.status.values;
 
@@ -197,7 +198,9 @@ exports.updateOrderStatus = async (req, res) => {
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: 'Estado no v\u00e1lido' });
     }
-    const order = await Order.findByPk(id);
+    const order = await Order.findByPk(id, {
+      include: [{ model: User, as: 'User', attributes: ['email', 'phone', 'name'] }]
+    });
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });
     order.status = status;
     if (status === 'rejected') {
@@ -210,7 +213,23 @@ exports.updateOrderStatus = async (req, res) => {
     const msg =
       status === 'received'
         ? 'La tienda ha recibido tu pedido y lo est\u00e1 preparando.'
+        : status === 'ready'
+        ? 'Tu pedido est\u00e1 listo para recoger.'
         : 'Estado actualizado';
+
+    if (['received', 'ready'].includes(status)) {
+      const subject =
+        status === 'received'
+          ? 'Pedido recibido'
+          : 'Pedido listo para recoger';
+      const text =
+        status === 'received'
+          ? 'Tu pedido ha sido recepcionado por la tienda. Te avisaremos cuando est\u00e9 listo.'
+          : 'Tu pedido est\u00e1 listo para que pases a recogerlo.';
+      if (order.User && order.User.email) {
+        sendEmail(order.User.email, subject, text);
+      }
+    }
     return res.json({
       ...formatOrder(order),
       message: msg,
