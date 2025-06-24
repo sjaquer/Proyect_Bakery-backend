@@ -20,7 +20,11 @@ const validate = require('../middleware/validate');
 router.post(
   '/',
   protect,
-  validate({ items: { required: true, type: 'array' }, paymentMethod: { required: true } }),
+  validate({
+    items: { required: true, type: 'array' },
+    paymentMethod: { required: true },
+    isDelivery: { type: 'boolean' }
+  }),
   createOrder
 );
 router.get('/',            protect,           getCustomerOrders);
